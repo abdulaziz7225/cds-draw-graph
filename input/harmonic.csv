@@ -1,3 +1,4 @@
+program; run; cpus; duration;
 mopp-2018-t0-harmonic-progression-sum; 1; 1; 208253291
 mopp-2018-t0-harmonic-progression-sum; 1; 2; 108790233
 mopp-2018-t0-harmonic-progression-sum; 1; 4; 59942543

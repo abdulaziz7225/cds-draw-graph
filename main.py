@@ -1,22 +1,33 @@
 import os
 import matplotlib.pyplot as plt
 import re
+import csv
 
 
 def load_data(filepath):
-    runs = {}
+    runs = dict()
     with open(filepath, 'r') as file:
-        for line in file:
-            if not line.strip():
+        reader = csv.reader(file, delimiter=';')
+        header = next(reader)
+        if header[0].strip().lower() != 'program':
+            # Not a header, reset file pointer
+            file.seek(0)
+            reader = csv.reader(file, delimiter=';')
+
+        for row in reader:
+            if len(row) != 4:
                 continue
-            _, run, cpus, duration = line.strip().split(';')
-            run = int(run.strip())
-            cpus = int(cpus.strip())
-            duration = int(duration.strip())
+            try:
+                run = int(row[1])
+                cpus = int(row[2])
+                duration = int(row[3])
+            except ValueError:
+                continue
 
             if run not in runs:
-                runs[run] = {}
-            runs[run][cpus] = duration
+                runs[run] = []
+            runs[run].append((cpus, duration))
+
     return runs
 
 
@@ -28,15 +39,14 @@ def title_to_snake_case(title):
 
 def plot_speedup(all_run_data, graph_title):
     plt.figure(figsize=(12, 7))
-    
-    for running_times in all_run_data.values():
-        for run, durations in running_times.items():
-            base_duration = durations.get(1)
-            if not base_duration:
-                continue
-            x = sorted(durations.keys())
-            y = [base_duration / durations[cpu] for cpu in x]
-            plt.plot(x, y, marker='o', label=f"Run {run}")
+
+    for run in all_run_data:
+        base_duration = all_run_data[run][0][1]
+        if not base_duration:
+            continue
+        x = [cpu for cpu, _ in all_run_data[run]]
+        y = [base_duration / duration for _, duration in all_run_data[run]]
+        plt.plot(x, y, marker='o', label=f"Run {run}")
 
     plt.title(graph_title)
     plt.xlabel('Number of CPU Cores')
@@ -54,22 +64,25 @@ def plot_speedup(all_run_data, graph_title):
     print(f"\n✅ Plot saved as: {filename}")
 
 
-if __name__ == "__main__":
-    folder_name = input("Enter the folder name containing the .txt files: ").strip()
+def main():
+    file_name = input("Enter the filename: ").strip()
     graph_title = input("Enter the graph title: ").strip()
 
-    if not os.path.isdir(folder_name):
-        print(f"❌ Folder '{folder_name}' not found.")
-        exit(1)
+    if not file_name:
+        print("File path cannot be empty.")
+        return
 
-    all_run_data = {}
-    for filename in sorted(os.listdir(folder_name)):
-        if filename.endswith(".txt"):
-            filepath = os.path.join(folder_name, filename)
-            run_data = load_data(filepath)
-            all_run_data[filename] = run_data
+    input_path = os.path.join('input', file_name)
+    if not os.path.isfile(input_path):
+        print(f"❌ File '{file_name}' not found in the 'input' folder.")
+        return
 
+    all_run_data = load_data(input_path)
     if not all_run_data:
         print("❌ No .txt files found in the folder.")
     else:
         plot_speedup(all_run_data, graph_title)
+
+
+if __name__ == "__main__":
+    main()
