@@ -46,7 +46,10 @@ def plot_speedup(all_run_data, graph_title):
             continue
         x = [cpu for cpu, _ in all_run_data[run]]
         y = [base_duration / duration for _, duration in all_run_data[run]]
-        plt.plot(x, y, marker='o', label=f"Run {run}")
+        if run == 0:
+            plt.plot(x, y, marker='o', label=f"Baseline")
+        else:
+            plt.plot(x, y, marker='o', label=f"Run {run}")
 
     plt.title(graph_title)
     plt.xlabel('Number of CPU Cores')
